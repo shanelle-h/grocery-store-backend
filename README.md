@@ -779,7 +779,7 @@ Set up these variables in your Postman environment:
 ### Key Tables
 
 
-### :adult: `USERS`
+#### :adult: `USERS`
 Stores user information including customers and administrators.
 
 | Column | Type | Constraints | Description |
@@ -794,7 +794,7 @@ Stores user information including customers and administrators.
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Account creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 
-### :file_folder: `CATEGORIES`
+#### :file_folder: `CATEGORIES`
 Hierarchical product categories supporting a tree structure.
 
 | Column | Type | Constraints | Description |
@@ -807,7 +807,7 @@ Hierarchical product categories supporting a tree structure.
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 
-### :package: `PRODUCTS`
+#### :package: `PRODUCTS`
 Product catalog with pricing and categorization.
 
 | Column | Type | Constraints | Description |
@@ -824,7 +824,7 @@ Product catalog with pricing and categorization.
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 
-### :shopping_trolley: `ORDERS`
+#### :shopping_trolley: `ORDERS`
 Customer orders with status tracking.
 
 | Column | Type | Constraints | Description |
@@ -839,7 +839,7 @@ Customer orders with status tracking.
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Order creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 
-### :package: `ORDER_ITEMS`
+#### :package: `ORDER_ITEMS`
 Individual items within orders.
 
 | Column | Type | Constraints | Description |
@@ -852,7 +852,7 @@ Individual items within orders.
 | `total_price` | `INT` | `NOT NULL` | Line total in cents |
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 
-### :bell: `NOTIFICATIONS`
+#### :bell: `NOTIFICATIONS`
 System notifications for users and orders.
 
 | Column | Type | Constraints | Description |
@@ -869,7 +869,7 @@ System notifications for users and orders.
 
 ---
 
-### :link: Relationships
+#### :link: Relationships
 - **Users** :left_right_arrow: **Orders**: One-to-many relationship – a user can have multiple orders.
 - **Users** :left_right_arrow: **Notifications**: One-to-many relationship for user notifications.
 - **Categories** :left_right_arrow: **Categories**: Self-referencing for hierarchical structure.
@@ -878,7 +878,7 @@ System notifications for users and orders.
 - **Orders** :left_right_arrow: **Order Items**: One-to-many relationship for order composition.
 - **Orders** :left_right_arrow: **Notifications**: One-to-many relationship for order-related notifications.
 
-### :jigsaw: Key Features
+#### :jigsaw: Key Features
 - **User Management**: Supports both customers and administrators.
 - **Hierarchical Categories**: Tree structure for product organization.
 - **Inventory Tracking**: Stock quantity management.
@@ -888,7 +888,60 @@ System notifications for users and orders.
 - **Soft Deletes**: Logical deletion using `is_active` flags.
 - **Currency Support**: Multi-currency pricing enabled.
 
+### ⚡ Database Indexes
 
+To optimize database performance, especially for `JOIN` operations and `WHERE` clause filtering, the following indexes are recommended.
+
+#### `USERS` Table
+An index on the `email` column will significantly speed up user lookups and enforce uniqueness checks.
+
+```sql
+CREATE UNIQUE INDEX idx_users_email ON USERS(email);
+```
+
+---
+#### `CATEGORIES` Table
+Indexing `parent_id` is crucial for efficiently querying the hierarchical tree structure.
+
+```sql
+CREATE INDEX idx_categories_parent_id ON CATEGORIES(parent_id);
+```
+
+---
+#### `PRODUCTS` Table
+Indexes on `sku` and `category_id` will accelerate product searches and filtering by category.
+
+```sql
+CREATE UNIQUE INDEX idx_products_sku ON PRODUCTS(sku);
+CREATE INDEX idx_products_category_id ON PRODUCTS(category_id);
+```
+
+---
+#### `ORDERS` Table
+Indexing `user_id` is essential for quickly retrieving all orders belonging to a specific customer. An index on `status` helps in filtering orders based on their state (e.g., 'pending', 'shipped').
+
+```sql
+CREATE INDEX idx_orders_user_id ON ORDERS(user_id);
+CREATE INDEX idx_orders_status ON ORDERS(status);
+```
+
+---
+#### `ORDER_ITEMS` Table
+A composite index on `order_id` and `product_id` is highly effective for speeding up joins and lookups related to the contents of a specific order.
+
+```sql
+CREATE INDEX idx_order_items_order_product ON ORDER_ITEMS(order_id, product_id);
+```
+
+---
+#### `NOTIFICATIONS` Table
+Indexes on foreign keys (`user_id`, `order_id`) and the `status` column will optimize queries for retrieving notifications and processing pending ones.
+
+```sql
+CREATE INDEX idx_notifications_user_id ON NOTIFICATIONS(user_id);
+CREATE INDEX idx_notifications_order_id ON NOTIFICATIONS(order_id);
+CREATE INDEX idx_notifications_status ON NOTIFICATIONS(status);
+```
 
 
 
