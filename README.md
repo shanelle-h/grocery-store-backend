@@ -94,55 +94,55 @@ Authorization: Bearer <jwt_token>
 ### Authentication Endpoints
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Register a new user. |
-| `POST` | `/api/auth/login` | Log in a user and receive a JWT. |
-| `POST` | `/api/auth/refresh` | Refresh an expired access token. |
-| `GET` | `/api/auth/me` | Get the authenticated user's profile. |
+| `POST` | `/auth/register` | Register a new user. |
+| `POST` | `/auth/login` | Log in a user and receive a JWT. |
+| `POST` | `/auth/refresh` | Refresh an expired access token. |
+| `GET` | `/auth/me` | Get the authenticated user's profile. |
 ---
 ### Category Management (Admin Only)
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/categories` | List all categories. |
-| `GET` | `/api/categories/tree` | Get the full category tree structure. |
-| `GET` | `/api/categories/:id` | Get a single category by its ID. |
-| `POST` | `/api/categories` | Create a new category. |
-| `PUT` | `/api/categories/:id` | Update an existing category. |
-| `DELETE` | `/api/categories/:id` | Delete a category. |
+| `GET` | `/categories` | List all categories. |
+| `GET` | `/categories/tree` | Get the full category tree structure. |
+| `GET` | `/categories/:id` | Get a single category by its ID. |
+| `POST` | `/categories` | Create a new category. |
+| `PUT` | `/categories/:id` | Update an existing category. |
+| `DELETE` | `/categories/:id` | Delete a category. |
 ---
 ### Product Management
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/products` | List all products with filtering options. |
-| `GET` | `/api/products/:id` | Get a single product by its ID. |
-| `POST` | `/api/products` | Create a new product (Admin only). |
-| `PUT` | `/api/products/:id` | Update an existing product (Admin only). |
-| `DELETE` | `/api/products/:id` | Delete a product (Admin only). |
-| `POST` | `/api/products/bulk-upload` | Bulk upload products from a file (Admin only). |
-| `GET` | `/api/categories/:id/avg-price` | Get the average price for products in a category. |
+| `GET` | `/products` | List all products with filtering options. |
+| `GET` | `/products/:id` | Get a single product by its ID. |
+| `POST` | `/products` | Create a new product (Admin only). |
+| `PUT` | `/products/:id` | Update an existing product (Admin only). |
+| `DELETE` | `/products/:id` | Delete a product (Admin only). |
+| `POST` | `/products/bulk-upload` | Bulk upload products from a file (Admin only). |
+| `GET` | `/categories/:id/avg-price` | Get the average price for products in a category. |
 ---
 ### Customer Management
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/customers` | List all customers (Admin only). |
-| `GET` | `/api/customers/profile` | Get the authenticated user's own profile. |
-| `PUT` | `/api/customers/profile` | Update the authenticated user's own profile. |
+| `GET` | `/customers` | List all customers (Admin only). |
+| `GET` | `/customers/profile` | Get the authenticated user's own profile. |
+| `PUT` | `/customers/profile` | Update the authenticated user's own profile. |
 ---
 ### Order Management
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/orders` | List orders (own for customers, all for admins). |
-| `GET` | `/api/orders/:id` | Get the details of a specific order. |
-| `POST` | `/api/orders` | Create a new order. |
-| `PUT` | `/api/orders/:id/status` | Update the status of an order (Admin only). |
+| `GET` | `/orders` | List orders (own for customers, all for admins). |
+| `GET` | `/orders/:id` | Get the details of a specific order. |
+| `POST` | `/orders` | Create a new order. |
+| `PUT` | `/orders/:id/status` | Update the status of an order (Admin only). |
 ---
 ### Notification Management
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/notifications` | List all notifications for the authenticated user. |
-| `GET` | `/api/notifications/:id` | Get a single notification by its ID. |
-| `PATCH`| `/api/notifications/:id/read` | Mark a specific notification as read. |
-| `POST` | `/api/notifications/mark-all-read` | Mark all unread notifications as read. |
-| `DELETE`| `/api/notifications/:id` | Delete a notification. |
+| `GET` | `/notifications` | List all notifications for the authenticated user. |
+| `GET` | `/notifications/:id` | Get a single notification by its ID. |
+| `PATCH`| `/notifications/:id/read` | Mark a specific notification as read. |
+| `POST` | `/notifications/mark-all-read` | Mark all unread notifications as read. |
+| `DELETE`| `/notifications/:id` | Delete a notification. |
 
 ### HTTP Status Codes
 - `200` - Success
@@ -155,8 +155,6 @@ Authorization: Bearer <jwt_token>
 - `500` - Internal Server Error
 
 ---
-
-## Request/Response Headers
 
 ### Common Request Headers
 ```
@@ -286,8 +284,6 @@ System notifications for users and orders.
 
 ### ⚡ Database Indexes
 
-To optimize database performance, especially for `JOIN` operations and `WHERE` clause filtering, the following indexes are recommended.
-
 #### `USERS` Table
 An index on the `email` column will significantly speed up user lookups and enforce uniqueness checks.
 
@@ -343,6 +339,30 @@ CREATE INDEX idx_notifications_status ON NOTIFICATIONS(status);
 
 ## Project Structure
 
+```bash
+grocery-store-backend/
+├── src/
+│   ├── config/         # Environment variables, database connection, JWT settings
+│   ├── controllers/    # Handles incoming HTTP requests and sends responses
+│   ├── middleware/     # Express middleware for auth, validation, errors, etc.
+│   ├── models/         # Database models/entities (e.g., User, Product)
+│   ├── repositories/   # Data access layer abstracting database queries
+│   ├── services/       # Business logic layer
+│   ├── routes/         # API route definitions
+│   ├── utils/          # Helper functions and utilities
+│   ├── types/          # TypeScript type definitions
+│   └── app.ts          # Main application setup and server initialization
+├── migrations/         # Database schema migration files
+├── seeds/              # Database seed files for initial data
+├── tests/              # Automated tests (unit, integration)
+├── docs/               # API documentation (OpenAPI/Swagger) and diagrams
+├── docker/             # Docker configuration for containerization
+├── .env.example        # Example environment variables file
+├── knexfile.ts         # Knex.js configuration for migrations and seeds
+├── jest.config.js      # Jest test runner configuration
+├── package.json        # Project dependencies and scripts
+└── README.md           # Project documentation
+```
 
 ## Environment Variables Reference
 
