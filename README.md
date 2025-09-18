@@ -211,7 +211,7 @@ Product catalog with pricing and categorization.
 | `sku` | `VARCHAR(100)` | `UNIQUE`<br>`NOT NULL` | Stock keeping unit |
 | `description` | `TEXT` | `NULL` | Product description |
 | `price` | `INT` | `NOT NULL` | Price in cents |
-| `currency` | `VARCHAR(3)` | `DEFAULT 'USD'` | Currency code |
+| `currency` | `VARCHAR(3)` | `DEFAULT 'Ksh'` | Currency code |
 | `category_id` | `INT` | `FOREIGN KEY` | Category reference |
 | `is_active` | `BOOLEAN` | `DEFAULT TRUE` | Product availability |
 | `stock_quantity` | `INT` | `DEFAULT 0` | Available stock |
@@ -226,7 +226,7 @@ Customer orders with status tracking.
 | `id` | `INT` | `PRIMARY KEY`<br>`AUTO_INCREMENT` | Unique order identifier |
 | `user_id` | `INT` | `FOREIGN KEY`<br>`NOT NULL` | Customer reference |
 | `total_price` | `INT` | `NOT NULL` | Total amount in cents |
-| `currency` | `VARCHAR(3)` | `DEFAULT 'USD'` | Currency code |
+| `currency` | `VARCHAR(3)` | `DEFAULT 'Ksh'` | Currency code |
 | `status` | `VARCHAR(20)` | `DEFAULT 'pending'` | Order status |
 | `delivery_address` | `TEXT` | `NULL` | Delivery address |
 | `notes` | `TEXT` | `NULL` | Order notes |
