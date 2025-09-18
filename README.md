@@ -80,80 +80,127 @@
 ## API Documentation
 
 
-## 📊 Database Schema
+## 🗃️ Database Schema
 
 ### Entity Relationship Diagram
-mermaiderDiagram
-    USERS {
-        int id PK
-        string name
-        string email UK
-        string password
-        string phone
-        string role
-        timestamp created_at
-        timestamp updated_at
-    }
-    
-    CATEGORIES {
-        int id PK
-        string name
-        int parent_id FK
-        timestamp created_at
-        timestamp updated_at
-    }
-    
-    PRODUCTS {
-        int id PK
-        string name
-        string sku UK
-        text description
-        int price
-        string currency
-        int category_id FK
-        timestamp created_at
-        timestamp updated_at
-    }
-    
-    ORDERS {
-        int id PK
-        int user_id FK
-        int total_price
-        string currency
-        string status
-        timestamp created_at
-        timestamp updated_at
-    }
-    
-    ORDER_ITEMS {
-        int id PK
-        int order_id FK
-        int product_id FK
-        int quantity
-        int unit_price
-        int total_price
-    }
-    
-    USERS ||--o{ ORDERS : places
-    CATEGORIES ||--o{ PRODUCTS : contains
-    CATEGORIES ||--o{ CATEGORIES : "parent-child"
-    PRODUCTS ||--o{ ORDER_ITEMS : "included in"
-    ORDERS ||--o{ ORDER_ITEMS : contains
-Key Tables
 
-users: Customer and admin accounts
-categories: Hierarchical product categories
-products: Product catalog with pricing
-orders: Customer orders with totals
-order_items: Individual items within orders
+![ERD Diagram](ERD.png)
 
 ### Key Tables
 
-- **users**: Customer and admin accounts
-- **categories**: Hierarchical product categories
-- **products**: Product catalog with pricing
-- **orders**: Customer orders with totals
-- **order_items**: Individual items within orders
+
+### :adult: `USERS`
+Stores user information including customers and administrators.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INT` | `PRIMARY KEY`<br>`AUTO_INCREMENT` | Unique user identifier |
+| `name` | `VARCHAR(255)` | `NOT NULL` | User's full name |
+| `email` | `VARCHAR(255)` | `UNIQUE`<br>`NOT NULL` | User's email address |
+| `password` | `VARCHAR(255)` | `NOT NULL` | Hashed password |
+| `phone` | `VARCHAR(20)` | `NULL` | Contact phone number |
+| `role` | `ENUM('customer', 'admin')` | | User role |
+| `is_active` | `BOOLEAN` | `DEFAULT TRUE` | Account status |
+| `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Account creation time |
+| `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
+
+### :file_folder: `CATEGORIES`
+Hierarchical product categories supporting a tree structure.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INT` | `PRIMARY KEY`<br>`AUTO_INCREMENT` | Unique category identifier |
+| `name` | `VARCHAR(255)` | `NOT NULL` | Category name |
+| `parent_id` | `INT` | `FOREIGN KEY`<br>`NULL` | Parent category reference |
+| `description` | `TEXT` | `NULL` | Category description |
+| `is_active` | `BOOLEAN` | `DEFAULT TRUE` | Category status |
+| `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
+| `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
+
+### :package: `PRODUCTS`
+Product catalog with pricing and categorization.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INT` | `PRIMARY KEY`<br>`AUTO_INCREMENT` | Unique product identifier |
+| `name` | `VARCHAR(255)` | `NOT NULL` | Product name |
+| `sku` | `VARCHAR(100)` | `UNIQUE`<br>`NOT NULL` | Stock keeping unit |
+| `description` | `TEXT` | `NULL` | Product description |
+| `price` | `INT` | `NOT NULL` | Price in cents |
+| `currency` | `VARCHAR(3)` | `DEFAULT 'USD'` | Currency code |
+| `category_id` | `INT` | `FOREIGN KEY` | Category reference |
+| `is_active` | `BOOLEAN` | `DEFAULT TRUE` | Product availability |
+| `stock_quantity` | `INT` | `DEFAULT 0` | Available stock |
+| `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
+| `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
+
+### :shopping_trolley: `ORDERS`
+Customer orders with status tracking.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INT` | `PRIMARY KEY`<br>`AUTO_INCREMENT` | Unique order identifier |
+| `user_id` | `INT` | `FOREIGN KEY`<br>`NOT NULL` | Customer reference |
+| `total_price` | `INT` | `NOT NULL` | Total amount in cents |
+| `currency` | `VARCHAR(3)` | `DEFAULT 'USD'` | Currency code |
+| `status` | `VARCHAR(20)` | `DEFAULT 'pending'` | Order status |
+| `delivery_address` | `TEXT` | `NULL` | Delivery address |
+| `notes` | `TEXT` | `NULL` | Order notes |
+| `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Order creation time |
+| `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
+
+### :package: `ORDER_ITEMS`
+Individual items within orders.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INT` | `PRIMARY KEY`<br>`AUTO_INCREMENT` | Unique item identifier |
+| `order_id` | `INT` | `FOREIGN KEY`<br>`NOT NULL` | Order reference |
+| `product_id` | `INT` | `FOREIGN KEY`<br>`NOT NULL` | Product reference |
+| `quantity` | `INT` | `NOT NULL` | Item quantity |
+| `unit_price` | `INT` | `NOT NULL` | Unit price in cents |
+| `total_price` | `INT` | `NOT NULL` | Line total in cents |
+| `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
+
+### :bell: `NOTIFICATIONS`
+System notifications for users and orders.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `INT` | `PRIMARY KEY`<br>`AUTO_INCREMENT` | Unique notification ID |
+| `user_id` | `INT` | `FOREIGN KEY`<br>`NOT NULL` | User reference |
+| `order_id` | `INT` | `FOREIGN KEY`<br>`NULL` | Order reference |
+| `type` | `VARCHAR(10)` | `ENUM('sms', 'email')` | Notification type |
+| `recipient` | `VARCHAR(255)` | `NOT NULL` | Phone or email address |
+| `message` | `TEXT` | `NOT NULL` | Notification content |
+| `status` | `VARCHAR(20)` | `DEFAULT 'pending'` | Delivery status |
+| `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
+| `sent_at` | `TIMESTAMP` | `NULL` | Delivery time |
+
+---
+
+### :link: Relationships
+- **Users** :left_right_arrow: **Orders**: One-to-many relationship – a user can have multiple orders.
+- **Users** :left_right_arrow: **Notifications**: One-to-many relationship for user notifications.
+- **Categories** :left_right_arrow: **Categories**: Self-referencing for hierarchical structure.
+- **Categories** :left_right_arrow: **Products**: One-to-many relationship for product categorization.
+- **Products** :left_right_arrow: **Order Items**: One-to-many relationship for order line items.
+- **Orders** :left_right_arrow: **Order Items**: One-to-many relationship for order composition.
+- **Orders** :left_right_arrow: **Notifications**: One-to-many relationship for order-related notifications.
+
+### :jigsaw: Key Features
+- **User Management**: Supports both customers and administrators.
+- **Hierarchical Categories**: Tree structure for product organization.
+- **Inventory Tracking**: Stock quantity management.
+- **Order Processing**: Complete lifecycle with status tracking.
+- **Notification System**: Multi-channel (SMS/Email) notifications.
+- **Audit Trail**: Timestamps for creation and updates.
+- **Soft Deletes**: Logical deletion using `is_active` flags.
+- **Currency Support**: Multi-currency pricing enabled.
+
+
+
+
 
 ## Project Structure
 
