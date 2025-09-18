@@ -36,10 +36,22 @@
 
 ### 🛡️ Security Features
 - Password hashing with bcrypt
-- JWT token authentication
+- JWT token authentication with refresh tokens
+- Two-factor authentication (TOTP)
 - Input validation and sanitization
 - Role-based authorization (Customer/Admin)
+- Comprehensive audit trail system
+- Rate limiting for API endpoints
+- Security event monitoring
 
+### 📊 Monitoring & Logging
+- Structured application logging with Winston
+- Request/response logging with Morgan
+- Comprehensive audit trail for all data changes
+- Security event tracking
+- Performance monitoring
+- Error tracking and alerting
+  
 ## 🚀 Tech Stack
 
 | Category | Technology |
@@ -52,6 +64,8 @@
 | **Testing** | Jest |
 | **Containerization** | Docker |
 | **Validation** | express-validator |
+| **Logging** | Winston + Morgan |
+| **2FA** | speakeasy + qrcode |
 
 ## 📋 Prerequisites
 
@@ -98,7 +112,21 @@ Authorization: Bearer <jwt_token>
 | `POST` | `/auth/login` | Log in a user and receive a JWT. |
 | `POST` | `/auth/refresh` | Refresh an expired access token. |
 | `GET` | `/auth/me` | Get the authenticated user's profile. |
+| `POST` | `/auth/logout` | Logout and invalidate tokens. |
 ---
+
+# 🔐 Two-Factor Authentication (2FA) Endpoints
+
+| Method | Endpoint                | Description                                        |
+|--------|-------------------------|-------------------------------------------
+| POST   | `/auth/2fa/setup`       | Generate QR code and secret for 2FA setup 
+| POST   | `/auth/2fa/verify-setup`| Confirm 2FA setup with token              
+| POST   | `/auth/2fa/verify`      | Verify 2FA token during login             
+| POST   | `/auth/2fa/disable`     | Disable 2FA (requires password + 2FA token)        |
+| GET    | `/auth/2fa/backup-codes`| Generate new backup codes                 
+| POST   | `/auth/2fa/verify-backup`| Verify using backup code                 
+---
+
 ### Category Management (Admin Only)
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
@@ -143,6 +171,16 @@ Authorization: Bearer <jwt_token>
 | `PATCH`| `/notifications/:id/read` | Mark a specific notification as read. |
 | `POST` | `/notifications/mark-all-read` | Mark all unread notifications as read. |
 | `DELETE`| `/notifications/:id` | Delete a notification. |
+---
+
+# 🔍 Audit & Security Endpoints (Admin Only)
+
+| Method | Endpoint                    | Description                                |
+|--------|-----------------------------|---------------------------------------
+| GET    | `/audit/logs`               | Get audit logs with filtering         
+| GET    | `/audit/security-events`    | Get security event logs               
+| GET    | `/audit/user/:userId`       | Get audit trail for a specific user   
+---
 
 ### HTTP Status Codes
 - `200` - Success
@@ -187,6 +225,7 @@ Stores user information including customers and administrators.
 | `is_active` | `BOOLEAN` | `DEFAULT TRUE` | Account status |
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Account creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
+
 
 #### :file_folder: `CATEGORIES`
 Hierarchical product categories supporting a tree structure.
