@@ -82,6 +82,70 @@
 
 ## 📊 Database Schema
 
+### Entity Relationship Diagram
+mermaiderDiagram
+    USERS {
+        int id PK
+        string name
+        string email UK
+        string password
+        string phone
+        string role
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    CATEGORIES {
+        int id PK
+        string name
+        int parent_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    PRODUCTS {
+        int id PK
+        string name
+        string sku UK
+        text description
+        int price
+        string currency
+        int category_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    ORDERS {
+        int id PK
+        int user_id FK
+        int total_price
+        string currency
+        string status
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    ORDER_ITEMS {
+        int id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        int unit_price
+        int total_price
+    }
+    
+    USERS ||--o{ ORDERS : places
+    CATEGORIES ||--o{ PRODUCTS : contains
+    CATEGORIES ||--o{ CATEGORIES : "parent-child"
+    PRODUCTS ||--o{ ORDER_ITEMS : "included in"
+    ORDERS ||--o{ ORDER_ITEMS : contains
+Key Tables
+
+users: Customer and admin accounts
+categories: Hierarchical product categories
+products: Product catalog with pricing
+orders: Customer orders with totals
+order_items: Individual items within orders
 
 ### Key Tables
 
