@@ -317,6 +317,7 @@ Individual items within orders.
 | `unit_price` | `INT` | `NOT NULL` | Unit price in cents |
 | `total_price` | `INT` | `NOT NULL` | Line total in cents |
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
+---
 
 #### :bell: `NOTIFICATIONS`
 System notifications for users and orders.
@@ -332,80 +333,170 @@ System notifications for users and orders.
 | `status` | `VARCHAR(20)` | `DEFAULT 'pending'` | Delivery status |
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 | `sent_at` | `TIMESTAMP` | `NULL` | Delivery time |
+---
+
+# 🔐 TWO_FACTOR_ATTEMPTS
+Tracks 2FA verification attempts for security monitoring.
+
+| Column        | Type                         | Constraints                    | Description                  |
+|---------------|------------------------------|--------------------------------|------------------------------|
+| `id`          | INT                          | PRIMARY KEY, AUTO_INCREMENT    | Unique attempt identifier    |
+| `user_id`     | INT                          | FOREIGN KEY, NOT NULL          | User reference               |
+| `attempt_type`| ENUM('login', 'setup', 'disable') | NOT NULL                    | Type of 2FA attempt          |
+| `code_used`   | VARCHAR(10)                  | NOT NULL                       | Code that was attempted      |
+| `is_successful` | BOOLEAN                    | NOT NULL                       | Whether attempt succeeded    |
+| `ip_address`  | VARCHAR(45)                  | NULL                           | IP address of attempt        |
+| `user_agent`  | TEXT                         | NULL                           | Browser user agent           |
+| `created_at`  | TIMESTAMP                    | AUTO_GENERATED                 | Attempt timestamp            |
 
 ---
 
-#### :link: Relationships
-- **Users** :left_right_arrow: **Orders**: One-to-many relationship – a user can have multiple orders.
-- **Users** :left_right_arrow: **Notifications**: One-to-many relationship for user notifications.
-- **Categories** :left_right_arrow: **Categories**: Self-referencing for hierarchical structure.
-- **Categories** :left_right_arrow: **Products**: One-to-many relationship for product categorization.
-- **Products** :left_right_arrow: **Order Items**: One-to-many relationship for order line items.
-- **Orders** :left_right_arrow: **Order Items**: One-to-many relationship for order composition.
-- **Orders** :left_right_arrow: **Notifications**: One-to-many relationship for order-related notifications.
+# 📋 AUDIT_LOGS
+Comprehensive audit trail for all system changes.
 
-#### :jigsaw: Key Features
-- **User Management**: Supports both customers and administrators.
-- **Hierarchical Categories**: Tree structure for product organization.
-- **Inventory Tracking**: Stock quantity management.
-- **Order Processing**: Complete lifecycle with status tracking.
-- **Notification System**: Multi-channel (SMS/Email) notifications.
-- **Audit Trail**: Timestamps for creation and updates.
-- **Soft Deletes**: Logical deletion using `is_active` flags.
-- **Currency Support**: Multi-currency pricing enabled.
+| Column         | Type                               | Constraints                 | Description                          |
+|----------------|------------------------------------|-----------------------------|--------------------------------------|
+| `id`           | BIGINT                             | PRIMARY KEY, AUTO_INCREMENT | Unique audit log ID                  |
+| `table_name`   | VARCHAR(64)                        | NOT NULL                    | Table that was modified              |
+| `record_id`    | INT                                | NOT NULL                    | ID of the modified record            |
+| `action_type`  | ENUM('CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'ACCESS') | NOT NULL | Type of action              |
+| `user_id`      | INT                                | FOREIGN KEY, NULL           | User who performed action            |
+| `user_role`    | VARCHAR(20)                        | NULL                        | Role of user at time of action       |
+| `old_values`   | JSON                               | NULL                        | Previous state for updates           |
+| `new_values`   | JSON                               | NULL                        | New state for creates/updates        |
+| `changed_fields` | JSON                             | NULL                        | List of changed field names          |
+| `ip_address`   | VARCHAR(45)                        | NULL                        | IP address of request                |
+| `user_agent`   | TEXT                               | NULL                        | Browser user agent                   |
+| `session_id`   | VARCHAR(255)                       | NULL                        | User session identifier              |
+| `request_id`   | VARCHAR(36)                        | NULL                        | Unique request identifier            |
+| `metadata`     | JSON                               | NULL                        | Additional context                   |
+| `created_at`   | TIMESTAMP                          | AUTO_GENERATED              | Audit entry timestamp                |
 
-### ⚡ Database Indexes
+---
 
-#### `USERS` Table
-An index on the `email` column will significantly speed up user lookups and enforce uniqueness checks.
+# 🛡 SECURITY_AUDIT
+Security-specific events and monitoring.
+
+| Column         | Type             | Constraints                 | Description                      |
+|----------------|------------------|-----------------------------|----------------------------------|
+| `id`           | BIGINT           | PRIMARY KEY, AUTO_INCREMENT | Unique security event ID         |
+| `event_type`   | VARCHAR(50)      | NOT NULL                    | Type of security event           |
+| `user_id`      | INT              | FOREIGN KEY, NULL           | User involved in event           |
+| `email`        | VARCHAR(255)     | NULL                        | Email for failed login attempts  |
+| `ip_address`   | VARCHAR(45)      | NOT NULL                    | IP address of event              |
+| `user_agent`   | TEXT             | NULL                        | Browser user agent               |
+| `additional_data` | JSON          | NULL                        | Event-specific data              |
+| `risk_score`   | TINYINT          | DEFAULT 0                   | Risk assessment (0-100)          |
+| `blocked`      | BOOLEAN          | DEFAULT FALSE               | Whether action was blocked       |
+| `created_at`   | TIMESTAMP        | AUTO_GENERATED              | Event timestamp                  |
+
+
+# 🔗 Relationships
+
+- **Users ↔ Orders**: One-to-many – a user can have multiple orders  
+- **Users ↔ Notifications**: One-to-many – user notifications  
+- **Users ↔ Two Factor Attempts**: One-to-many – 2FA attempts tracking  
+- **Users ↔ Audit Logs**: One-to-many – user action tracking  
+- **Users ↔ Security Audit**: One-to-many – security event tracking  
+- **Users ↔ Currencies**: Many-to-one – user preferred currency  
+
+- **Categories ↔ Categories**: Self-referencing – hierarchical structure  
+- **Categories ↔ Products**: One-to-many – product categorization  
+
+- **Products ↔ Product Prices**: One-to-many – multi-currency pricing  
+- **Products ↔ Order Items**: One-to-many – order line items  
+- **Products ↔ Currencies**: Many-to-one – base currency  
+
+- **Product Prices ↔ Currencies**: Many-to-one – price currency  
+- **Product Prices ↔ Users**: Many-to-one – created by admin  
+
+- **Orders ↔ Order Items**: One-to-many – order composition  
+- **Orders ↔ Notifications**: One-to-many – order-related notifications  
+- **Orders ↔ Currencies**: Many-to-one – order currency  
+
+- **Order Items ↔ Currencies**: Many-to-one – item currency  
+
+---
+
+# 🧩 Key Features
+
+- **Enhanced Security**: 2FA, comprehensive audit trails, security monitoring  
+- **Multi-Currency Support**: Manual pricing in KES, UGX, TZS, USD with smart formatting  
+- **User Management**: Customers and administrators with role-based access and currency preferences  
+- **Hierarchical Categories**: Tree structure for product organization  
+- **Flexible Pricing**: Products can have different prices in different currencies  
+- **Inventory Tracking**: Stock quantity management  
+- **Order Processing**: Complete lifecycle with status tracking and currency support  
+- **Notification System**: Multi-channel (SMS/Email) notifications  
+- **Audit Trail**: Complete tracking of all system changes including price updates  
+- **Soft Deletes**: Logical deletion using `is_active` flags  
+
+---
+
+# ⚡ Database Indexes
 
 ```sql
+-- Users table indexes
 CREATE UNIQUE INDEX idx_users_email ON USERS(email);
-```
+CREATE INDEX idx_users_role ON USERS(role);
+CREATE INDEX idx_users_two_factor_enabled ON USERS(two_factor_enabled);
+CREATE INDEX idx_users_preferred_currency ON USERS(preferred_currency);
 
----
-#### `CATEGORIES` Table
-Indexing `parent_id` is crucial for efficiently querying the hierarchical tree structure.
+-- Currencies table indexes
+CREATE UNIQUE INDEX idx_currencies_code ON CURRENCIES(code);
+CREATE INDEX idx_currencies_is_active ON CURRENCIES(is_active);
+CREATE INDEX idx_currencies_display_order ON CURRENCIES(display_order);
 
-```sql
+-- Categories table indexes
 CREATE INDEX idx_categories_parent_id ON CATEGORIES(parent_id);
-```
+CREATE INDEX idx_categories_is_active ON CATEGORIES(is_active);
 
----
-#### `PRODUCTS` Table
-Indexes on `sku` and `category_id` will accelerate product searches and filtering by category.
-
-```sql
+-- Products table indexes
 CREATE UNIQUE INDEX idx_products_sku ON PRODUCTS(sku);
 CREATE INDEX idx_products_category_id ON PRODUCTS(category_id);
-```
+CREATE INDEX idx_products_is_active ON PRODUCTS(is_active);
+CREATE INDEX idx_products_base_currency ON PRODUCTS(base_currency);
 
----
-#### `ORDERS` Table
-Indexing `user_id` is essential for quickly retrieving all orders belonging to a specific customer. An index on `status` helps in filtering orders based on their state (e.g., 'pending', 'shipped').
+-- Product Prices table indexes
+CREATE INDEX idx_product_prices_lookup ON PRODUCT_PRICES(product_id, currency, is_active);
+CREATE INDEX idx_product_prices_currency ON PRODUCT_PRICES(currency);
+CREATE INDEX idx_product_prices_effective ON PRODUCT_PRICES(effective_from, effective_until);
+CREATE INDEX idx_product_prices_created_by ON PRODUCT_PRICES(created_by);
+CREATE UNIQUE INDEX idx_product_prices_active ON PRODUCT_PRICES(product_id, currency, effective_until);
 
-```sql
+-- Orders table indexes
 CREATE INDEX idx_orders_user_id ON ORDERS(user_id);
 CREATE INDEX idx_orders_status ON ORDERS(status);
-```
+CREATE INDEX idx_orders_currency ON ORDERS(currency);
+CREATE INDEX idx_orders_created_at ON ORDERS(created_at);
 
----
-#### `ORDER_ITEMS` Table
-A composite index on `order_id` and `product_id` is highly effective for speeding up joins and lookups related to the contents of a specific order.
-
-```sql
+-- Order Items table indexes
 CREATE INDEX idx_order_items_order_product ON ORDER_ITEMS(order_id, product_id);
-```
+CREATE INDEX idx_order_items_currency ON ORDER_ITEMS(currency);
 
----
-#### `NOTIFICATIONS` Table
-Indexes on foreign keys (`user_id`, `order_id`) and the `status` column will optimize queries for retrieving notifications and processing pending ones.
-
-```sql
+-- Notifications table indexes
 CREATE INDEX idx_notifications_user_id ON NOTIFICATIONS(user_id);
 CREATE INDEX idx_notifications_order_id ON NOTIFICATIONS(order_id);
 CREATE INDEX idx_notifications_status ON NOTIFICATIONS(status);
-```
+CREATE INDEX idx_notifications_is_read ON NOTIFICATIONS(is_read);
+
+-- 2FA Attempts table indexes
+CREATE INDEX idx_2fa_attempts_user_id ON TWO_FACTOR_ATTEMPTS(user_id);
+CREATE INDEX idx_2fa_attempts_created_at ON TWO_FACTOR_ATTEMPTS(created_at);
+
+-- Audit Logs table indexes
+CREATE INDEX idx_audit_table_record ON AUDIT_LOGS(table_name, record_id);
+CREATE INDEX idx_audit_user_id ON AUDIT_LOGS(user_id);
+CREATE INDEX idx_audit_created_at ON AUDIT_LOGS(created_at);
+CREATE INDEX idx_audit_action_type ON AUDIT_LOGS(action_type);
+CREATE INDEX idx_audit_request_id ON AUDIT_LOGS(request_id);
+
+-- Security Audit table indexes
+CREATE INDEX idx_security_audit_user_id ON SECURITY_AUDIT(user_id);
+CREATE INDEX idx_security_audit_event_type ON SECURITY_AUDIT(event_type);
+CREATE INDEX idx_security_audit_created_at ON SECURITY_AUDIT(created_at);
+CREATE INDEX idx_security_audit_risk_score ON SECURITY_AUDIT(risk_score);
+
 
 
 
@@ -435,7 +526,7 @@ grocery-store-backend/
 ├── package.json        # Project dependencies and scripts
 └── README.md           # Project documentation
 ```
-
+---
 ## Environment Variables Reference
 
 
