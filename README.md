@@ -44,6 +44,14 @@
 - Rate limiting for API endpoints
 - Security event monitoring
 
+### 💱 Currency Features
+- Support for multiple East African currencies (KES, UGX, TZS, USD)
+- Manual price setting by administrators for each currency
+- User preferred currency selection
+- Real-time currency formatting based on locale rules
+- Price history tracking and audit trail
+- Bulk price management tools
+
 ### 📊 Monitoring & Logging
 - Structured application logging with Winston
 - Request/response logging with Morgan
@@ -66,6 +74,7 @@
 | **Validation** | express-validator |
 | **Logging** | Winston + Morgan |
 | **2FA** | speakeasy + qrcode |
+| **Currency** | Intl.NumberFormat for formatting |
 
 ## 📋 Prerequisites
 
@@ -122,9 +131,20 @@ Authorization: Bearer <jwt_token>
 | POST   | `/auth/2fa/setup`       | Generate QR code and secret for 2FA setup 
 | POST   | `/auth/2fa/verify-setup`| Confirm 2FA setup with token              
 | POST   | `/auth/2fa/verify`      | Verify 2FA token during login             
-| POST   | `/auth/2fa/disable`     | Disable 2FA (requires password + 2FA token)        |
+| POST   | `/auth/2fa/disable`     | Disable 2FA (requires password + 2FA token)   
 | GET    | `/auth/2fa/backup-codes`| Generate new backup codes                 
 | POST   | `/auth/2fa/verify-backup`| Verify using backup code                 
+---
+
+### 💱 Currency Management Endpoints (Admin Only)
+
+| Method | Endpoint                       | Description                                   |
+|--------|--------------------------------|----------------------------------------
+| GET    | `/admin/currencies`            | List all supported currencies          
+| POST   | `/admin/currencies`            | Add new currency support               
+| PUT    | `/admin/currencies/:code`      | Update currency settings               
+| DELETE | `/admin/currencies/:code`      | Deactivate a currency               
+| GET    | `/admin/currencies/:code/products` | List products with prices in a specific currency |
 ---
 
 ### Category Management (Admin Only)
@@ -138,16 +158,21 @@ Authorization: Bearer <jwt_token>
 | `DELETE` | `/categories/:id` | Delete a category. |
 ---
 ### Product Management
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/products` | List all products with filtering options. |
-| `GET` | `/products/:id` | Get a single product by its ID. |
-| `POST` | `/products` | Create a new product (Admin only). |
-| `PUT` | `/products/:id` | Update an existing product (Admin only). |
-| `DELETE` | `/products/:id` | Delete a product (Admin only). |
-| `POST` | `/products/bulk-upload` | Bulk upload products from a file (Admin only). |
-| `GET` | `/categories/:id/avg-price` | Get the average price for products in a category. |
+| Method | Endpoint                                   | Description                
+|--------|---------------------------------------------|---------------------------
+| GET    | `/products`                                | List all products with filtering options         |
+| GET    | `/products?currency=UGX`                   | Get products with prices in specified currency   |
+| GET    | `/products/:id`                            | Get single product by ID                         |
+| POST   | `/products`                                | Create new product (**Admin only**)              |
+| PUT    | `/products/:id`                            | Update existing product (**Admin only**)         |
+| DELETE | `/products/:id`                            | Delete a product (**Admin only**)                |
+| POST   | `/products/bulk-upload`                    | Bulk upload products from file (**Admin only**)  |
+| POST   | `/admin/products/:id/prices`               | Set price for product in specific currency (**Admin only**) |
+| PUT    | `/admin/products/:id/prices/:currency`     | Update product price in currency (**Admin only**) |
+| DELETE | `/admin/products/:id/prices/:currency`     | Remove price for currency (**Admin only**)       |
+| GET    | `/categories/:id/avg-price`                | Get average price for products in a category     |
 ---
+
 ### Customer Management
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
@@ -214,18 +239,24 @@ Authorization: Bearer <jwt_token>
 #### :adult: `USERS`
 Stores user information including customers and administrators.
 
-| Column | Type | Constraints | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | `INT` | `PRIMARY KEY`<br>`AUTO_INCREMENT` | Unique user identifier |
-| `name` | `VARCHAR(255)` | `NOT NULL` | User's full name |
-| `email` | `VARCHAR(255)` | `UNIQUE`<br>`NOT NULL` | User's email address |
-| `password` | `VARCHAR(255)` | `NOT NULL` | Hashed password |
-| `phone` | `VARCHAR(20)` | `NULL` | Contact phone number |
-| `role` | `ENUM('customer', 'admin')` | | User role |
-| `is_active` | `BOOLEAN` | `DEFAULT TRUE` | Account status |
-| `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Account creation time |
-| `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 
+| Column              | Type                                | Constraints                                 | Description                     
+|----------------------|-------------------------------------|---------------------------------------------|--------------------------------
+| `id`                | INT                                 | PRIMARY KEY, AUTO_INCREMENT                  | Unique user identifier         
+| `name`              | VARCHAR(255)                        | NOT NULL                                    | User's full name                
+| `email`             | VARCHAR(255)                        | UNIQUE, NOT NULL                            | User's email address            
+| `password`          | VARCHAR(255)                        | NOT NULL                                    | Hashed password                 
+| `phone`             | VARCHAR(20)                         | NULL                                        | Contact phone number            
+| `role`              | ENUM('customer', 'admin')           | DEFAULT 'customer'                          | User role                       
+| `is_active`         | BOOLEAN                             | DEFAULT TRUE                                | Account status                  
+| `preferred_currency`| VARCHAR(3)                          | DEFAULT 'KES'                               | User's preferred currency       
+| `two_factor_enabled`| BOOLEAN                             | DEFAULT FALSE                               | 2FA enablement status           
+| `two_factor_secret` | VARCHAR(255)                        | NULL                                        | TOTP secret for 2FA             
+| `backup_codes`      | TEXT                                | NULL                                        | JSON array of backup codes      
+| `last_login_at`     | TIMESTAMP                           | NULL                                        | Last login timestamp            
+| `created_at`        | TIMESTAMP                           | AUTO_GENERATED                              | Account creation time           
+| `updated_at`        | TIMESTAMP                           | AUTO_UPDATED                                | Last update time                 
+---
 
 #### :file_folder: `CATEGORIES`
 Hierarchical product categories supporting a tree structure.
@@ -239,7 +270,7 @@ Hierarchical product categories supporting a tree structure.
 | `is_active` | `BOOLEAN` | `DEFAULT TRUE` | Category status |
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
-
+---
 #### :package: `PRODUCTS`
 Product catalog with pricing and categorization.
 
@@ -250,12 +281,13 @@ Product catalog with pricing and categorization.
 | `sku` | `VARCHAR(100)` | `UNIQUE`<br>`NOT NULL` | Stock keeping unit |
 | `description` | `TEXT` | `NULL` | Product description |
 | `price` | `INT` | `NOT NULL` | Price in cents |
-| `currency` | `VARCHAR(3)` | `DEFAULT 'Ksh'` | Currency code |
+| `base_currency` | `VARCHAR(3)` | `DEFAULT 'Ksh'` | Currency code |
 | `category_id` | `INT` | `FOREIGN KEY` | Category reference |
 | `is_active` | `BOOLEAN` | `DEFAULT TRUE` | Product availability |
 | `stock_quantity` | `INT` | `DEFAULT 0` | Available stock |
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
+---
 
 #### :shopping_trolley: `ORDERS`
 Customer orders with status tracking.
@@ -271,6 +303,7 @@ Customer orders with status tracking.
 | `notes` | `TEXT` | `NULL` | Order notes |
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Order creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
+---
 
 #### :package: `ORDER_ITEMS`
 Individual items within orders.
