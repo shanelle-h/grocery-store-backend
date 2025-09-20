@@ -45,12 +45,12 @@
 - Security event monitoring
 
 ### 💱 Currency Features
-- Support for multiple East African currencies (KES, UGX, TZS, USD)
-- Manual price setting by administrators for each currency
-- User preferred currency selection
-- Real-time currency formatting based on locale rules
-- Price history tracking and audit trail
-- Bulk price management tools
+- Support for multiple currencies (KES, UGX, TZS, USD) managed via a database table.
+- Base pricing in a single currency (KES) with automatic conversion using real-time exchange rates.
+- User-specific preferred currency selection and display.
+- Transactional record-keeping of the base price, final price, and the exact exchange rate used.
+- Comprehensive audit trail for all changes to prices and currency settings.
+- Admin tools for managing active currencies and exchange rate synchronization.
 
 ### 📊 Monitoring & Logging
 - Structured application logging with Winston
@@ -231,7 +231,7 @@ Authorization: Bearer <jwt_token>
 
 ### Entity Relationship Diagram
 
-![ERD Diagram](ERD3.png)
+![ERD Diagram](ERD4.png)
 
 ### Key Tables
 
