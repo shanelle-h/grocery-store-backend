@@ -231,7 +231,7 @@ Authorization: Bearer <jwt_token>
 
 ### Entity Relationship Diagram
 
-![ERD Diagram](NEW ERD.png)
+![ERD Diagram](ERD2.png)
 
 ### Key Tables
 
