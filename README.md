@@ -231,7 +231,7 @@ Authorization: Bearer <jwt_token>
 
 ### Entity Relationship Diagram
 
-![ERD Diagram](ERD.png)
+![ERD Diagram](NEW ERD.png)
 
 ### Key Tables
 
@@ -271,8 +271,8 @@ Hierarchical product categories supporting a tree structure.
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 ---
-#### :package: `PRODUCTS`
-Product catalog with pricing and categorization.
+### :package: `PRODUCTS` (Updated)
+The price is stored in the store's base currency (e.g., KES).
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
@@ -280,33 +280,34 @@ Product catalog with pricing and categorization.
 | `name` | `VARCHAR(255)` | `NOT NULL` | Product name |
 | `sku` | `VARCHAR(100)` | `UNIQUE`<br>`NOT NULL` | Stock keeping unit |
 | `description` | `TEXT` | `NULL` | Product description |
-| `price` | `INT` | `NOT NULL` | Price in cents |
-| `base_currency` | `VARCHAR(3)` | `DEFAULT 'Ksh'` | Currency code |
+| `base_price_in_cents` | `INT` | `NOT NULL` | Price in the store's base currency. |
+| `currency_code` | `VARCHAR(3)` | `FOREIGN KEY` | The base currency code (references `CURRENCIES`). |
 | `category_id` | `INT` | `FOREIGN KEY` | Category reference |
 | `is_active` | `BOOLEAN` | `DEFAULT TRUE` | Product availability |
 | `stock_quantity` | `INT` | `DEFAULT 0` | Available stock |
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 ---
-
-#### :shopping_trolley: `ORDERS`
-Customer orders with status tracking.
+### :shopping_trolley: `ORDERS` (Updated)
+This table stores the complete financial context of the order total.
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | `INT` | `PRIMARY KEY`<br>`AUTO_INCREMENT` | Unique order identifier |
 | `user_id` | `INT` | `FOREIGN KEY`<br>`NOT NULL` | Customer reference |
-| `total_price` | `INT` | `NOT NULL` | Total amount in cents |
-| `currency` | `VARCHAR(3)` | `DEFAULT 'Ksh'` | Currency code |
+| `base_total_price_in_cents`| `INT` | `NOT NULL` | Order total in the store's base currency. |
+| `base_currency_code` | `VARCHAR(3)` | `FOREIGN KEY` | The base currency code (e.g., 'KES'). |
+| `final_total_price_in_cents`| `INT` | `NOT NULL` | The final amount the customer paid. |
+| `final_currency_code` | `VARCHAR(3)` | `FOREIGN KEY` | The currency the customer paid with. |
+| `exchange_rate_used` | `DECIMAL(15,6)`| `NOT NULL` | The conversion rate applied at purchase. |
 | `status` | `VARCHAR(20)` | `DEFAULT 'pending'` | Order status |
 | `delivery_address` | `TEXT` | `NULL` | Delivery address |
 | `notes` | `TEXT` | `NULL` | Order notes |
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Order creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 ---
-
-#### :package: `ORDER_ITEMS`
-Individual items within orders.
+### :package: `ORDER_ITEMS` (Updated)
+Each line item records its base price and the final price paid after currency conversion.
 
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
@@ -314,11 +315,35 @@ Individual items within orders.
 | `order_id` | `INT` | `FOREIGN KEY`<br>`NOT NULL` | Order reference |
 | `product_id` | `INT` | `FOREIGN KEY`<br>`NOT NULL` | Product reference |
 | `quantity` | `INT` | `NOT NULL` | Item quantity |
-| `unit_price` | `INT` | `NOT NULL` | Unit price in cents |
-| `total_price` | `INT` | `NOT NULL` | Line total in cents |
+| `base_unit_price_in_cents` | `INT` | `NOT NULL` | Item's unit price in the store's base currency. |
+| `base_currency_code` | `VARCHAR(3)` | `FOREIGN KEY` | The base currency code (e.g., 'KES'). |
+| `final_unit_price_in_cents`| `INT` | `NOT NULL` | Unit price in the customer's currency. |
+| `final_total_price_in_cents`| `INT` | `NOT NULL` | Line total in the customer's currency. |
+| `final_currency_code` | `VARCHAR(3)` | `FOREIGN KEY` | The currency the customer paid with. |
+| `exchange_rate_used` | `DECIMAL(15,6)`| `NOT NULL` | Conversion rate applied at the time of purchase. |
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 ---
+#### 🏦 `CURRENCIES`
+Stores information for each supported currency.
 
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `code` | `VARCHAR(3)` | `PRIMARY KEY` | The 3-letter ISO currency code. |
+| `name` | `VARCHAR(255)` | `NOT NULL` | The full name of the currency. |
+| `symbol` | `VARCHAR(5)` | `NOT NULL` | The currency symbol (e.g., KSh, $). |
+| `is_active` | `BOOLEAN` | `DEFAULT TRUE` | Whether the currency is available for use. |
+| `created_at`| `TIMESTAMP` | `AUTO_GENERATED` | Timestamp of when the record was created. |
+---
+#### 💱 `EXCHANGE_RATES`
+Caches conversion rates fetched from an external API.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `base_currency_code` | `VARCHAR(3)` | `PRIMARY KEY`<br>`FOREIGN KEY` | The currency code to convert from. |
+| `target_currency_code`| `VARCHAR(3)` | `PRIMARY KEY`<br>`FOREIGN KEY` | The currency code to convert to. |
+| `rate` | `DECIMAL(15, 6)`| `NOT NULL` | The conversion rate. |
+| `last_updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | When the rate was last updated from the provider. |
+---
 #### :bell: `NOTIFICATIONS`
 System notifications for users and orders.
 
@@ -348,7 +373,6 @@ Tracks 2FA verification attempts for security monitoring.
 | `ip_address`  | VARCHAR(45)                  | NULL                           | IP address of attempt        |
 | `user_agent`  | TEXT                         | NULL                           | Browser user agent           |
 | `created_at`  | TIMESTAMP                    | AUTO_GENERATED                 | Attempt timestamp            |
-
 ---
 
 # 📋 AUDIT_LOGS
@@ -371,7 +395,6 @@ Comprehensive audit trail for all system changes.
 | `request_id`   | VARCHAR(36)                        | NULL                        | Unique request identifier            |
 | `metadata`     | JSON                               | NULL                        | Additional context                   |
 | `created_at`   | TIMESTAMP                          | AUTO_GENERATED              | Audit entry timestamp                |
-
 ---
 
 # 🛡 SECURITY_AUDIT
@@ -389,7 +412,7 @@ Security-specific events and monitoring.
 | `risk_score`   | TINYINT          | DEFAULT 0                   | Risk assessment (0-100)          |
 | `blocked`      | BOOLEAN          | DEFAULT FALSE               | Whether action was blocked       |
 | `created_at`   | TIMESTAMP        | AUTO_GENERATED              | Event timestamp                  |
-
+---
 
 # 🔗 Relationships
 
