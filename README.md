@@ -270,7 +270,7 @@ Hierarchical product categories supporting a tree structure.
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 ---
-### :package: `PRODUCTS` (Updated)
+### :package: `PRODUCTS` 
 The price is stored in the store's base currency (e.g., KES).
 
 | Column | Type | Constraints | Description |
@@ -287,7 +287,7 @@ The price is stored in the store's base currency (e.g., KES).
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 ---
-### :shopping_trolley: `ORDERS` (Updated)
+### :shopping_trolley: `ORDERS` 
 This table stores the complete financial context of the order total.
 
 | Column | Type | Constraints | Description |
@@ -305,7 +305,7 @@ This table stores the complete financial context of the order total.
 | `created_at` | `TIMESTAMP` | `AUTO_GENERATED` | Order creation time |
 | `updated_at` | `TIMESTAMP` | `AUTO_UPDATED` | Last update time |
 ---
-### :package: `ORDER_ITEMS` (Updated)
+### :package: `ORDER_ITEMS` 
 Each line item records its base price and the final price paid after currency conversion.
 
 | Column | Type | Constraints | Description |
