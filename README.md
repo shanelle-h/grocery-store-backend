@@ -248,8 +248,7 @@ Stores user information including customers and administrators.
 | `password`          | VARCHAR(255)                        | NOT NULL                                    | Hashed password                 
 | `phone`             | VARCHAR(20)                         | NULL                                        | Contact phone number            
 | `role`              | ENUM('customer', 'admin')           | DEFAULT 'customer'                          | User role                       
-| `is_active`         | BOOLEAN                             | DEFAULT TRUE                                | Account status                  
-| `preferred_currency`| VARCHAR(3)                          | DEFAULT 'KES'                               | User's preferred currency       
+| `is_active`         | BOOLEAN                             | DEFAULT TRUE                                | Account status                       
 | `two_factor_enabled`| BOOLEAN                             | DEFAULT FALSE                               | 2FA enablement status           
 | `two_factor_secret` | VARCHAR(255)                        | NULL                                        | TOTP secret for 2FA             
 | `backup_codes`      | TEXT                                | NULL                                        | JSON array of backup codes      
